@@ -5,7 +5,7 @@
 #include "hittable_list.h"
 #include "camera.h"
 #include "material.h"
-#define max_depth (50)
+#define max_depth (80)
 __device__ __forceinline__
 color ray_color(ray r, sphere*const dev_spheres, curandStateXORWOW_t* rand_state) {
     hit_record rec;
@@ -20,9 +20,7 @@ color ray_color(ray r, sphere*const dev_spheres, curandStateXORWOW_t* rand_state
             mul = cross_dot(mul,attenuation);
         }
         else{
-            point3 target = rec.p + random_in_hemisphere(rec.normal, rand_state);
-            r = ray(rec.p, target - rec.p);
-            mul *= 0.5;
+            return color::zeros();
         }
     }
     if(depth == 0) return vec3::zeros();
@@ -30,23 +28,7 @@ color ray_color(ray r, sphere*const dev_spheres, curandStateXORWOW_t* rand_state
     f64 t = 0.5*(unit_direction.y + 1.0);
     return cross_dot(mul,((1.0-t)*color(1.0, 1.0, 1.0) + t*color(0.5, 0.7, 1.0)));
 }
-__device__
-color ray_color_book(const ray& r, sphere*const dev_spheres, curandStateXORWOW_t* rand_state, int depth) {
-    hit_record rec;
 
-    // If we've exceeded the ray bounce limit, no more light is gathered.
-    if (depth <= 0)
-        return color(0,0,0);
-
-    if (world::hit(r, 0, infinity, rec, dev_spheres)) {
-        point3 target = rec.p + rec.normal + random_in_unit_sphere(rand_state);
-        return 0.5 * ray_color_book(ray(rec.p, target - rec.p), dev_spheres, rand_state, depth-1);
-    }
-
-    vec3 unit_direction = unit_vector(r.direction());
-    auto t = 0.5*(unit_direction.y + 1.0);
-    return (1.0-t)*color(1.0, 1.0, 1.0) + t*color(0.5, 0.7, 1.0);
-}
 __device__ __forceinline__
 void write_color(u8*const dev_ptr, const color& pixel_color, u32 samples_per_pixel, u64 offset){
     f64 r = pixel_color.x;
@@ -62,7 +44,7 @@ void write_color(u8*const dev_ptr, const color& pixel_color, u32 samples_per_pix
     dev_ptr[offset*4 + 3] = (u8)255;
 }
 
-#define samples_per_pixel ((u32)500)
+#define samples_per_pixel ((u32)800)
 // Image
 #define aspect_ratio (16.0 / 9.0)
 #define image_width (16*16*5)
@@ -136,7 +118,7 @@ int main( void ) {
     float   elapsedTime;
     HANDLE_ERROR( cudaEventElapsedTime( &elapsedTime,
                                         start, stop ) );
-
+    printf("time = %0.3f\n",elapsedTime);
     HANDLE_ERROR( cudaEventDestroy( start ) );
     HANDLE_ERROR( cudaEventDestroy( stop ) );
 

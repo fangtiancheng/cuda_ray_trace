@@ -12,11 +12,11 @@ public:
     ray(const point3& origin, const vec3& direction):
     orig(origin), dir(direction){}
     __host__ __device__
-    ray& operator=(const ray& other){
-        orig = other.orig;
-        dir = other.dir;
-        return *this;
-    }
+    // ray& operator=(const ray& other){
+    //     orig = other.orig;
+    //     dir = other.dir;
+    //     return *this;
+    // }
     __host__ __device__
     point3 at(f64 t) const {
         return orig + t*dir;

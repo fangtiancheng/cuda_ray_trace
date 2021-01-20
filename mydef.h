@@ -17,7 +17,7 @@ typedef long long i64;
 typedef unsigned char u8;
 typedef unsigned int u32;
 typedef unsigned long long u64;
-enum MATERIAL{LAMBERTIAN, METAL};
+enum MATERIAL{LAMBERTIAN, METAL, DIELECTRIC};
 
 static void HandleError( cudaError_t err,
     const char *file,
@@ -40,12 +40,12 @@ f64 degrees_to_radians(f64 degrees){
 // random on device
 __device__ __forceinline__
 f64 random_double(curandStateXORWOW_t* rand_state){
-    return curand_uniform(rand_state);
+    return curand_uniform_double(rand_state);
 }
 
 __device__ __forceinline__
 f64 random_double(f64 min, f64 max, curandStateXORWOW_t* rand_state){
-    return min + (max-min)*curand_uniform(rand_state);
+    return min + (max-min)*curand_uniform_double(rand_state);
 }
 
 __forceinline__ __host__ __device__

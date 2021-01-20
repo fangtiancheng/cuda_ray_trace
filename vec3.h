@@ -57,8 +57,8 @@ public:
         return vec3(f*vc.x,f*vc.y,f*vc.z);
     }
     __device__ __host__
-    f64 operator*(const vec3& other) const {
-        return x*other.x+y*other.y+z*other.z;
+    vec3 operator*(const vec3& other) const {
+        return vec3(x*other.x,y*other.y,z*other.z);
     }
     __device__ __host__
     vec3& operator*=(f64 f){
@@ -100,7 +100,7 @@ public:
     }
     __forceinline__ __device__
     inline static vec3 random(curandStateXORWOW_t* rand_state){
-        return vec3(curand_uniform(rand_state),curand_uniform(rand_state),curand_uniform(rand_state));
+        return vec3(curand_uniform_double(rand_state),curand_uniform_double(rand_state),curand_uniform_double(rand_state));
     }
     __forceinline__ __device__
     inline static vec3 random(f64 min, f64 max, curandStateXORWOW_t* rand_state){
@@ -139,6 +139,13 @@ vec3 random_in_hemisphere(const vec3& normal, curandStateXORWOW_t* rand_state) {
 __device__ __forceinline__
 vec3 reflect(const vec3& v, const vec3& n) {
     return v - 2*dot(v,n)*n;
+}
+__device__ __forceinline__
+vec3 refract(const vec3& uv, const vec3& n, f64 etai_over_etat) {
+    f64 cos_theta = fmin(dot(-uv, n), 1.0);
+    vec3 r_out_perp =  etai_over_etat * (uv + cos_theta*n);
+    vec3 r_out_parallel = -sqrt(abs(1.0 - r_out_perp.length_squared())) * n;
+    return r_out_perp + r_out_parallel;
 }
 typedef vec3 point3;
 typedef vec3 color;

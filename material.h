@@ -2,7 +2,7 @@
 #define _MATERIAL_H_
 #include "ray.h"
 // #include "hittable.h"
-
+/*
 class material{
 public:
     MATERIAL mat_enum;
@@ -43,5 +43,5 @@ public:
         }
     }
 };
-
+*/
 #endif
