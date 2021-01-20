@@ -1,59 +1,68 @@
-/*
- * Copyright 1993-2010 NVIDIA Corporation.  All rights reserved.
- *
- * NVIDIA Corporation and its licensors retain all intellectual property and 
- * proprietary rights in and to this software and related documentation. 
- * Any use, reproduction, disclosure, or distribution of this software 
- * and related documentation without an express license agreement from
- * NVIDIA Corporation is strictly prohibited.
- *
- * Please refer to the applicable NVIDIA end user license agreement (EULA) 
- * associated with this source code for terms and conditions that govern 
- * your use of this NVIDIA software.
- * 
- */
-
 #include <time.h>
 #include "vec3.h"
 #include "ray.h"
 #include "sphere.h"
 #include "hittable_list.h"
 #include "camera.h"
-#define rnd( x ) (x * rand() / RAND_MAX)
+#include "material.h"
 #define max_depth (50)
 __device__ __forceinline__
 color ray_color(ray r, sphere*const dev_spheres, curandStateXORWOW_t* rand_state) {
     hit_record rec;
-    f32 mul = 1.;
+    vec3 mul = vec3::ones();
     i32 depth = max_depth;
     while((depth > 0)&&world::hit(r, 0, infinity, rec, dev_spheres)) {
         depth--;
-        point3 target = rec.p + random_in_hemisphere(rec.normal, rand_state);
-        r = ray(rec.p, target - rec.p);
-        mul *= 0.5;
-        // return 0.5 * ray_color(ray(rec.p, target - rec.p), dev_spheres, rand_state);
+        ray scattered;
+        color attenuation;
+        if(rec.mat_ptr.scatter(r, rec, attenuation, scattered,rand_state)){
+            r = scattered;
+            mul = cross_dot(mul,attenuation);
+        }
+        else{
+            point3 target = rec.p + random_in_hemisphere(rec.normal, rand_state);
+            r = ray(rec.p, target - rec.p);
+            mul *= 0.5;
+        }
     }
     if(depth == 0) return vec3::zeros();
     vec3 unit_direction = unit_vector(r.direction());
-    f32 t = 0.5*(unit_direction.y + 1.0);
-    return mul*((1.0-t)*color(1.0, 1.0, 1.0) + t*color(0.5, 0.7, 1.0));
+    f64 t = 0.5*(unit_direction.y + 1.0);
+    return cross_dot(mul,((1.0-t)*color(1.0, 1.0, 1.0) + t*color(0.5, 0.7, 1.0)));
+}
+__device__
+color ray_color_book(const ray& r, sphere*const dev_spheres, curandStateXORWOW_t* rand_state, int depth) {
+    hit_record rec;
+
+    // If we've exceeded the ray bounce limit, no more light is gathered.
+    if (depth <= 0)
+        return color(0,0,0);
+
+    if (world::hit(r, 0, infinity, rec, dev_spheres)) {
+        point3 target = rec.p + rec.normal + random_in_unit_sphere(rand_state);
+        return 0.5 * ray_color_book(ray(rec.p, target - rec.p), dev_spheres, rand_state, depth-1);
+    }
+
+    vec3 unit_direction = unit_vector(r.direction());
+    auto t = 0.5*(unit_direction.y + 1.0);
+    return (1.0-t)*color(1.0, 1.0, 1.0) + t*color(0.5, 0.7, 1.0);
 }
 __device__ __forceinline__
 void write_color(u8*const dev_ptr, const color& pixel_color, u32 samples_per_pixel, u64 offset){
-    f32 r = pixel_color.x;
-    f32 g = pixel_color.y;
-    f32 b = pixel_color.z;
-    f32 scale = 1.0/ samples_per_pixel;
-    r = sqrtf(scale * r);
-    g = sqrtf(scale * g);
-    b = sqrtf(scale * b);
+    f64 r = pixel_color.x;
+    f64 g = pixel_color.y;
+    f64 b = pixel_color.z;
+    f64 scale = 1.0/ samples_per_pixel;
+    r = sqrt(scale * r);
+    g = sqrt(scale * g);
+    b = sqrt(scale * b);
     dev_ptr[offset*4 + 0] = (u8)(clamp(r, 0.0, 0.999) * 256);
     dev_ptr[offset*4 + 1] = (u8)(clamp(g, 0.0, 0.999) * 256);
     dev_ptr[offset*4 + 2] = (u8)(clamp(b, 0.0, 0.999) * 256);
     dev_ptr[offset*4 + 3] = (u8)255;
 }
 
-#define samples_per_pixel ((u32)100)
+#define samples_per_pixel ((u32)500)
 // Image
 #define aspect_ratio (16.0 / 9.0)
 #define image_width (16*16*5)
@@ -81,9 +90,10 @@ void kernel( u8* const dev_ptr, sphere* dev_spheres, camera* dev_camera) {
     curand_init(seed, 0, 0, &rand_state);
     color pixel_color = color::zeros();
     for (u32 s = 0; s < samples_per_pixel; ++s) {
-        f32 u = (x + random_double(&rand_state)) / (image_width-1);
-        f32 v = (y + random_double(&rand_state)) / (image_height-1);
+        f64 u = (x + random_double(&rand_state)) / (image_width-1);
+        f64 v = (y + random_double(&rand_state)) / (image_height-1);
         ray r = dev_camera->get_ray(u, v);
+        // pixel_color += ray_color_book(r, dev_spheres, &rand_state, max_depth);
         pixel_color += ray_color(r, dev_spheres, &rand_state);
     }
     write_color(dev_ptr, pixel_color, samples_per_pixel, offset);

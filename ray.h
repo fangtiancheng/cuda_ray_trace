@@ -18,7 +18,7 @@ public:
         return *this;
     }
     __host__ __device__
-    point3 at(f32 t) const {
+    point3 at(f64 t) const {
         return orig + t*dir;
     }
     __forceinline__ __host__ __device__

@@ -4,12 +4,12 @@
 
 class vec3{
 public:
-    f32 x,y,z;
+    f64 x,y,z;
 public:
     __device__ __host__
     vec3():x(0.),y(0.),z(0.){}
     __device__ __host__
-    vec3(f32 a, f32 b, f32 c):
+    vec3(f64 a, f64 b, f64 c):
     x(a),y(b),z(c){}
     __device__ __host__
     vec3& operator=(const vec3& other){
@@ -45,42 +45,42 @@ public:
         return *this;
     }
     __device__ __host__
-    friend vec3 operator*(f32 f, const vec3& vc){
+    friend vec3 operator*(f64 f, const vec3& vc){
         return vec3(f*vc.x,f*vc.y,f*vc.z);
     }
     __device__ __host__
-    friend f32 dot(const vec3& vc1, const vec3& vc2){
+    friend f64 dot(const vec3& vc1, const vec3& vc2){
         return vc1.x*vc2.x+vc1.y*vc2.y+vc1.z*vc2.z;
     }
     __device__ __host__
-    friend vec3 operator*(const vec3& vc,f32 f){
+    friend vec3 operator*(const vec3& vc,f64 f){
         return vec3(f*vc.x,f*vc.y,f*vc.z);
     }
     __device__ __host__
-    f32 operator*(const vec3& other) const {
+    f64 operator*(const vec3& other) const {
         return x*other.x+y*other.y+z*other.z;
     }
     __device__ __host__
-    vec3& operator*=(f32 f){
+    vec3& operator*=(f64 f){
         x *= f; y *= f; z *= f;
         return *this;
     }
     __device__ __host__
-    vec3 operator/(f32 f) const {
+    vec3 operator/(f64 f) const {
         return vec3(x/f,y/f,z/f);
     }
     __device__ __host__
-    vec3& operator/=(f32 f){
+    vec3& operator/=(f64 f){
         x /= f; y /= f; z /= f;
         return *this;
     }
     __device__ __host__
-    f32 length_squared() const {
+    f64 length_squared() const {
         return x*x + y*y + z*z;
     }
     __device__ __host__
-    f32 length() const {
-        return sqrtf(x*x + y*y + z*z);
+    f64 length() const {
+        return sqrt(x*x + y*y + z*z);
     }
     __forceinline__ __device__ __host__
     vec3 unit_vector() const {
@@ -103,8 +103,17 @@ public:
         return vec3(curand_uniform(rand_state),curand_uniform(rand_state),curand_uniform(rand_state));
     }
     __forceinline__ __device__
-    inline static vec3 random(f32 min, f32 max, curandStateXORWOW_t* rand_state){
+    inline static vec3 random(f64 min, f64 max, curandStateXORWOW_t* rand_state){
         return vec3(random_double(min,max,rand_state),random_double(min,max,rand_state),random_double(min,max,rand_state));
+    }
+    __forceinline__ __device__ __host__
+    inline bool near_zero() const {
+        const f64 s = 1e-8;
+        return abs(x)<s && abs(y) < s && abs(z) < s;
+    }
+    __forceinline__ __device__ __host__
+    friend vec3 cross_dot(const vec3& a, const vec3& b){
+        return vec3(a.x*b.x,a.y*b.y,a.z*b.z);
     }
 };
 __device__ __forceinline__
@@ -126,6 +135,10 @@ vec3 random_in_hemisphere(const vec3& normal, curandStateXORWOW_t* rand_state) {
         return in_unit_sphere;
     else
         return -in_unit_sphere;
+}
+__device__ __forceinline__
+vec3 reflect(const vec3& v, const vec3& n) {
+    return v - 2*dot(v,n)*n;
 }
 typedef vec3 point3;
 typedef vec3 color;
