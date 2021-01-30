@@ -4,13 +4,13 @@
 #include "material.h"
 class sphere : public hittable{
 public:
-    material mat_ptr;
+    material* mat_ptr;
     point3 center;
     f64 radius;
 public:
     sphere() = default;
     __device__ __host__
-    sphere(const point3& cen, f64 r,const material& m):
+    sphere(const point3& cen, f64 r, material* m):
     center(cen), radius(r), mat_ptr(m) {}
     __device__ __forceinline__
     virtual bool hit(const ray& r, f64 t_min, f64 t_max, hit_record& rec) const override{

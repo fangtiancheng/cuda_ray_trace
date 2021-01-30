@@ -16,11 +16,14 @@ public:
         objects = new hittable*[SPHERES];
         // make world
         printf("make 0\n");
-        // objects[0] = new sphere(point3(0.,0.,-101.),100., material(color(0.8,0.8,0.0),METAL,0));
-        objects[0] = new sphere(point3(0.,-100.5,-1.),100., material(color(0.8,0.8,0.0),LAMBERTIAN));
-        objects[1] = new sphere(point3(0.8,0.,-1.), 0.5, material(color(0.7,0.3,0.3),METAL,0));
-        objects[2] = new sphere(point3(-1.,0.,-1.), 0.5, material(color(0.8,0.8,0.8),LAMBERTIAN,1.5));
-        objects[3] = new sphere(point3(1.,0.,-1.), 0.5, material(color(0.8,0.6,0.3),LAMBERTIAN,0));
+        auto material_ground = new lambertian (color(0.8, 0.8, 0.0));
+        auto material_center = new lambertian (color(0.7, 0.3, 0.3));
+        auto material_left   = new metal (color(0.8, 0.8, 0.8), 0.);
+        auto material_right  = new metal (color(0.8, 0.6, 0.2), 0.);
+        objects[0] = new sphere(point3(0.,-100.5,-1.),100., material_ground);
+        objects[1] = new sphere(point3(0.,0.,-1.), 0.5, material_center);
+        objects[2] = new sphere(point3(-1,0.,-1.), 0.5, material_left);
+        objects[3] = new sphere(point3(1.,0.,-1.), 0.5, material_right);
         printf("to exit hittable_list()\n");
     }
     __device__ __forceinline__

@@ -16,7 +16,7 @@ color ray_color(ray r, hittable_list*const dev_spheres, curandStateXORWOW_t* ran
         depth--;
         ray scattered;
         color attenuation;
-        if(rec.mat_ptr.scatter(r, rec, attenuation, scattered,rand_state)){
+        if(rec.mat_ptr->scatter(r, rec, attenuation, scattered, rand_state)){
             r = scattered;
             mul = cross_dot(mul,attenuation);
         }
