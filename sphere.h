@@ -2,26 +2,18 @@
 #define _SPHERE_H_
 #include "hittable.h"
 #include "material.h"
-class sphere {
+class sphere : public hittable{
 public:
     material mat_ptr;
     point3 center;
     f64 radius;
 public:
-    __device__ __host__
     sphere() = default;
     __device__ __host__
     sphere(const point3& cen, f64 r,const material& m):
     center(cen), radius(r), mat_ptr(m) {}
-    // __device__ __host__
-    // sphere& operator=(const sphere& other){
-    //     center = other.center;
-    //     radius = other.radius;
-    //     mat_ptr = other.mat_ptr;
-    //     return *this;
-    // }
-    __device__ __forceinline__ inline
-    bool hit(const ray& r, f64 t_min, f64 t_max, hit_record& rec) const {
+    __device__ __forceinline__
+    virtual bool hit(const ray& r, f64 t_min, f64 t_max, hit_record& rec) const override{
         vec3 oc = r.origin() - center;
         f64 a = r.direction().length_squared();
         f64 half_b = dot(oc, r.direction());

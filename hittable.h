@@ -2,6 +2,7 @@
 #define _HITTABLE_H_
 #include "ray.h"
 #include "material.h"
+
 struct hit_record {
     class material{
 public:
@@ -26,10 +27,12 @@ public:
         attenuation = albedo;
         return true;
     }
-    // __device__
+    // __device__ __forceinline__
     // material& operator=(const material& other){
     //     mat_enum = other.mat_enum;
     //     albedo = other.albedo;
+    //     fuzz = other.fuzz;
+    //     ir = other.ir;
     //     return *this;
     // }
     __device__
@@ -101,4 +104,9 @@ private:
     }
 };
 #define material hit_record::material
+class hittable {
+public:
+    __device__ __forceinline__
+    virtual bool hit(const ray& r, f64 t_min, f64 t_max, hit_record& rec) const = 0;
+};
 #endif
