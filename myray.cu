@@ -75,7 +75,7 @@ void kernel( u8* const dev_ptr, hittable_list** dev_spheres, camera** dev_camera
     for (u32 s = 0; s < samples_per_pixel; ++s) {
         f64 u = (x + random_double(&rand_state)) / (image_width-1);
         f64 v = (y + random_double(&rand_state)) / (image_height-1);
-        ray r = (*dev_camera)->get_ray(u, v);
+        ray r = (*dev_camera)->get_ray(u, v, &rand_state);
         // pixel_color += ray_color_book(r, *dev_spheres, &rand_state, max_depth);
         pixel_color += ray_color(r, *dev_spheres, &rand_state);
     }

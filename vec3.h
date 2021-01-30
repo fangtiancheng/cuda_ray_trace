@@ -115,6 +115,10 @@ public:
     friend vec3 cross_dot(const vec3& a, const vec3& b){
         return vec3(a.x*b.x,a.y*b.y,a.z*b.z);
     }
+    __forceinline__ __device__ __host__
+    friend vec3 cross(const vec3& a, const vec3& b){
+        return vec3(a.y*b.z-a.z*b.y,a.z*b.x-a.x*b.z,a.x*b.y-a.y*b.x);
+    }
 };
 __device__ __forceinline__
 vec3 random_in_unit_sphere(curandStateXORWOW_t* rand_state){
@@ -135,6 +139,14 @@ vec3 random_in_hemisphere(const vec3& normal, curandStateXORWOW_t* rand_state) {
         return in_unit_sphere;
     else
         return -in_unit_sphere;
+}
+__device__ __forceinline__
+vec3 random_in_unit_disk(curandStateXORWOW_t* rand_state) {
+    while (true) {
+        auto p = vec3(random_double(-1,1,rand_state), random_double(-1,1,rand_state), 0);
+        if (p.length_squared() >= 1) continue;
+        return p;
+    }
 }
 __device__ __forceinline__
 vec3 reflect(const vec3& v, const vec3& n) {
